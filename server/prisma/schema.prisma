@@ -88,7 +88,7 @@ model Appeal {
 
 model SearchHistory {
   id        String   @id @default(uuid())
-  query     String
+  query     String   @unique
   count     Int      @default(1)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
