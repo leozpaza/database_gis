@@ -1,0 +1,97 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  EDITOR
+  VIEWER
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String
+  name         String
+  role         UserRole  @default(VIEWER)
+  articles     Article[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Category {
+  id          String     @id @default(uuid())
+  code        String     @unique
+  name        String
+  slug        String     @unique
+  description String?
+  icon        String?
+  parentId    String?
+  parent      Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryHierarchy")
+  sortOrder   Int        @default(0)
+  articles    Article[]
+  appeals     Appeal[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([parentId])
+  @@index([slug])
+}
+
+model Article {
+  id               String   @id @default(uuid())
+  categoryId       String
+  category         Category @relation(fields: [categoryId], references: [id])
+  title            String
+  slug             String   @unique
+  summary          String   @db.VarChar(500)
+  content          String   @db.Text
+  responseTemplate String?  @db.Text
+  legalReference   String?
+  keywords         String[]
+  viewCount        Int      @default(0)
+  isPublished      Boolean  @default(false)
+  authorId         String
+  author           User     @relation(fields: [authorId], references: [id])
+  appeals          Appeal[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([categoryId])
+  @@index([isPublished])
+  @@index([title])
+  @@index([keywords])
+}
+
+model Appeal {
+  id              String   @id @default(uuid())
+  gisId           String   @unique
+  number          String
+  categoryId      String
+  category        Category @relation(fields: [categoryId], references: [id])
+  appealText      String   @db.Text
+  responseText    String?  @db.Text
+  address         String?
+  linkedArticleId String?
+  linkedArticle   Article? @relation(fields: [linkedArticleId], references: [id])
+  createdAt       DateTime @default(now())
+
+  @@index([categoryId])
+  @@index([gisId])
+}
+
+model SearchHistory {
+  id        String   @id @default(uuid())
+  query     String
+  count     Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([query])
+}
