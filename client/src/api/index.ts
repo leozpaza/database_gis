@@ -24,17 +24,13 @@ async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> 
   const data = isJson ? await res.json() : await res.text();
 
   if (!res.ok) {
-    const errorMessage = typeof data === 'object' && data !== null ? data.error : String(data || 'Request failed');
+    const errorMessage =
+      typeof data === 'object' && data !== null ? (data as Record<string, string>).error : String(data || 'Request failed');
 
     if (res.status === 404) {
       throw new Error('API недоступно или путь не найден. Проверьте конфигурацию VITE_API_BASE_URL.');
     }
 
-  const isJson = res.headers.get('content-type')?.includes('application/json');
-  const data = isJson ? await res.json() : await res.text();
-
-  if (!res.ok) {
-    const errorMessage = typeof data === 'object' && data !== null ? data.error : String(data || 'Request failed');
     throw new Error(errorMessage);
   }
 
