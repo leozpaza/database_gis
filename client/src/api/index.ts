@@ -45,10 +45,10 @@ export const api = {
   // Auth
   login: (email: string, password: string) =>
     fetchAPI<any>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
-  
+
   register: (email: string, password: string, name: string) =>
     fetchAPI<any>('/auth/register', { method: 'POST', body: JSON.stringify({ email, password, name }) }),
-  
+
   getMe: () => fetchAPI<any>('/auth/me'),
 
   // Categories
@@ -80,7 +80,7 @@ export const api = {
     fetchAPI<any>(`/admin/articles/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   adminDeleteArticle: (id: string) =>
     fetchAPI<any>(`/admin/articles/${id}`, { method: 'DELETE' }),
-  
+
   adminGetCategories: () => fetchAPI<any>('/admin/categories'),
   adminCreateCategory: (data: any) =>
     fetchAPI<any>('/admin/categories', { method: 'POST', body: JSON.stringify(data) }),
@@ -88,15 +88,15 @@ export const api = {
     fetchAPI<any>(`/admin/categories/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   adminDeleteCategory: (id: string) =>
     fetchAPI<any>(`/admin/categories/${id}`, { method: 'DELETE' }),
-  
+
   adminGetStats: () => fetchAPI<any>('/admin/stats'),
-  
+
   adminImport: async (file: File) => {
     const formData = new FormData();
     formData.append('file', file);
     const token = localStorage.getItem('gis-kb-storage');
     const accessToken = token ? JSON.parse(token).state?.accessToken : null;
-    
+
     const res = await fetch(`${API_BASE}/admin/import`, {
       method: 'POST',
       headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
