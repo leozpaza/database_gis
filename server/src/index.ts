@@ -32,6 +32,9 @@ app.use(cors({
   credentials: true
 }));
 
+// Trust Render's proxy (required for accurate rate limiting behind a single proxy)
+app.set('trust proxy', 1);
+
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 1 * 60 * 1000,
