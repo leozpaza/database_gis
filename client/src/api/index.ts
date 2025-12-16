@@ -1,5 +1,4 @@
-const API_BASE =
-  (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') || '/api';
+const API_BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') || '/api';
 
 async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const token = localStorage.getItem('gis-kb-storage');
@@ -31,6 +30,11 @@ async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> 
       throw new Error('API недоступно или путь не найден. Проверьте конфигурацию VITE_API_BASE_URL.');
     }
 
+  const isJson = res.headers.get('content-type')?.includes('application/json');
+  const data = isJson ? await res.json() : await res.text();
+
+  if (!res.ok) {
+    const errorMessage = typeof data === 'object' && data !== null ? data.error : String(data || 'Request failed');
     throw new Error(errorMessage);
   }
 
