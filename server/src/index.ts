@@ -1,8 +1,8 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-import dotenv from 'dotenv';
 import cron from 'node-cron';
 import https from 'https';
 
@@ -13,8 +13,6 @@ import { searchRoutes } from './routes/search.js';
 import { adminRoutes } from './routes/admin.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
-dotenv.config();
-
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -24,10 +22,18 @@ app.use(helmet({
   contentSecurityPolicy: false
 }));
 
+const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
+  .split(',')
+  .map(origin => origin.trim())
+  .filter(Boolean);
+
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: allowedOrigins,
   credentials: true
 }));
+
+// Trust Render's proxy (required for accurate rate limiting behind a single proxy)
+app.set('trust proxy', 1);
 
 // Rate limiting
 const limiter = rateLimit({
