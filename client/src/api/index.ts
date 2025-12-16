@@ -1,31 +1,50 @@
-const API_BASE = '/api';
+const API_BASE =
+  (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') || '/api';
 
 async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const token = localStorage.getItem('gis-kb-storage');
   const accessToken = token ? JSON.parse(token).state?.accessToken : null;
 
-  const res = await fetch(`${API_BASE}${endpoint}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
-      ...options?.headers
-    }
-  });
+  const url = `${API_BASE}${endpoint}`;
 
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Request failed');
-  return data;
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
+        ...options?.headers
+      }
+    });
+  } catch (err) {
+    throw new Error('Не удалось подключиться к серверу. Проверьте адрес API или попробуйте позже.');
+  }
+
+  const isJson = res.headers.get('content-type')?.includes('application/json');
+  const data = isJson ? await res.json() : await res.text();
+
+  if (!res.ok) {
+    const errorMessage = typeof data === 'object' && data !== null ? data.error : String(data || 'Request failed');
+
+    if (res.status === 404) {
+      throw new Error('API недоступно или путь не найден. Проверьте конфигурацию VITE_API_BASE_URL.');
+    }
+
+    throw new Error(errorMessage);
+  }
+
+  return data as T;
 }
 
 export const api = {
   // Auth
   login: (email: string, password: string) =>
     fetchAPI<any>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
-  
+
   register: (email: string, password: string, name: string) =>
     fetchAPI<any>('/auth/register', { method: 'POST', body: JSON.stringify({ email, password, name }) }),
-  
+
   getMe: () => fetchAPI<any>('/auth/me'),
 
   // Categories
@@ -57,7 +76,7 @@ export const api = {
     fetchAPI<any>(`/admin/articles/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   adminDeleteArticle: (id: string) =>
     fetchAPI<any>(`/admin/articles/${id}`, { method: 'DELETE' }),
-  
+
   adminGetCategories: () => fetchAPI<any>('/admin/categories'),
   adminCreateCategory: (data: any) =>
     fetchAPI<any>('/admin/categories', { method: 'POST', body: JSON.stringify(data) }),
@@ -65,15 +84,15 @@ export const api = {
     fetchAPI<any>(`/admin/categories/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   adminDeleteCategory: (id: string) =>
     fetchAPI<any>(`/admin/categories/${id}`, { method: 'DELETE' }),
-  
+
   adminGetStats: () => fetchAPI<any>('/admin/stats'),
-  
+
   adminImport: async (file: File) => {
     const formData = new FormData();
     formData.append('file', file);
     const token = localStorage.getItem('gis-kb-storage');
     const accessToken = token ? JSON.parse(token).state?.accessToken : null;
-    
+
     const res = await fetch(`${API_BASE}/admin/import`, {
       method: 'POST',
       headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
