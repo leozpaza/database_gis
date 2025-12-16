@@ -18,6 +18,7 @@ export default function SearchBar({ large, autoFocus, initialValue = '' }: Searc
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const { searchHistory, addSearchQuery } = useStore();
+  const showSearchIcon = query.length === 0;
 
   const { data: suggestions } = useQuery({
     queryKey: ['suggestions', query],
@@ -46,7 +47,9 @@ export default function SearchBar({ large, autoFocus, initialValue = '' }: Searc
   return (
     <form onSubmit={handleSubmit} className="relative w-full">
       <div className={`relative flex items-center ${large ? 'h-16' : 'h-12'}`}>
-        <Search className={`absolute left-4 text-slate-400 ${large ? 'w-6 h-6' : 'w-5 h-5'}`} />
+        {showSearchIcon && (
+          <Search className={`absolute left-4 text-slate-400 ${large ? 'w-6 h-6' : 'w-5 h-5'}`} />
+        )}
         <input
           ref={inputRef}
           type="text"
@@ -56,7 +59,7 @@ export default function SearchBar({ large, autoFocus, initialValue = '' }: Searc
           onBlur={() => setTimeout(() => setFocused(false), 200)}
           placeholder="Поиск по базе знаний..."
           autoFocus={autoFocus}
-          className={`w-full ${large ? 'pl-14 pr-14 text-lg' : 'pl-12 pr-12'} input`}
+          className={`w-full ${large ? (showSearchIcon ? 'pl-14 pr-14 text-lg' : 'pl-4 pr-14 text-lg') : showSearchIcon ? 'pl-12 pr-12' : 'pl-4 pr-12'} input`}
         />
         {query && (
           <button
