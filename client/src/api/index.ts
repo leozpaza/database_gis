@@ -1,21 +1,39 @@
-const API_BASE = '/api';
+const API_BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') || '/api';
 
 async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const token = localStorage.getItem('gis-kb-storage');
   const accessToken = token ? JSON.parse(token).state?.accessToken : null;
 
-  const res = await fetch(`${API_BASE}${endpoint}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
-      ...options?.headers
-    }
-  });
+  const url = `${API_BASE}${endpoint}`;
 
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Request failed');
-  return data;
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
+        ...options?.headers
+      }
+    });
+  } catch (err) {
+    throw new Error('Не удалось подключиться к серверу. Проверьте адрес API или попробуйте позже.');
+  }
+
+  const isJson = res.headers.get('content-type')?.includes('application/json');
+  const data = isJson ? await res.json() : await res.text();
+
+  if (!res.ok) {
+    const errorMessage = typeof data === 'object' && data !== null ? data.error : String(data || 'Request failed');
+
+    if (res.status === 404) {
+      throw new Error('API недоступно или путь не найден. Проверьте конфигурацию VITE_API_BASE_URL.');
+    }
+
+    throw new Error(errorMessage);
+  }
+
+  return data as T;
 }
 
 export const api = {

@@ -35,6 +35,10 @@ cp .env.example .env
 # Создание таблиц и заполнение данными
 npm run db:push
 npm run db:seed
+
+# Настройки клиентского API (для продакшена)
+cd ../client
+echo "VITE_API_BASE_URL=https://your-backend-host/api" > .env.local
 ```
 
 ## 🚀 Запуск
